@@ -14,9 +14,6 @@ const Index = () => {
             <TabContent />
           </div>
         </main>
-        <footer className="py-4 px-6 bg-white border-t text-center text-sm text-gray-500">
-          © 2025 MedVision AI - Medical Diagnosis Assistant
-        </footer>
       </div>
     </DiagnosisProvider>
   );
