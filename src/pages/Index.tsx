@@ -9,8 +9,10 @@ const Index = () => {
     <DiagnosisProvider>
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
-        <main className="flex-1 container mx-auto px-4 py-6">
-          <TabContent />
+        <main className="flex-1 container mx-auto p-4">
+          <div className="h-[calc(100vh-180px)]">
+            <TabContent />
+          </div>
         </main>
         <footer className="py-4 px-6 bg-white border-t text-center text-sm text-gray-500">
           © 2025 MedVision AI - Medical Diagnosis Assistant
