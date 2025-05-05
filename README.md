@@ -1,73 +1,68 @@
-# Welcome to your Lovable project
 
-## Project info
+# MedVision AI - Medical Diagnosis Assistant
 
-**URL**: https://lovable.dev/projects/0e01fe44-d3eb-4975-9464-ee22b3a87856
+A web application for diagnosing medical conditions based on X-ray images and patient information.
 
-## How can I edit this code?
+## Project Overview
 
-There are several ways of editing your application.
+MedVision AI combines modern web technologies with AI capabilities to provide preliminary medical diagnosis based on X-ray images and patient-provided information:
 
-**Use Lovable**
+- **Frontend:** React with ShadCN UI components and Tailwind CSS for a responsive, modern interface
+- **Backend:** Flask API handling image uploads, patient data, and AI model interactions
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0e01fe44-d3eb-4975-9464-ee22b3a87856) and start prompting.
+## Features
 
-Changes made via Lovable will be committed automatically to this repo.
+- **X-ray Image Upload:** Upload chest X-ray images for AI analysis
+- **Patient Information Form:** Enter relevant medical details to improve diagnosis accuracy
+- **Diagnosis Results:** View AI-generated diagnosis with confidence scores for potential conditions
+- **AI Chat Interface:** Discuss results with an AI assistant that provides contextual medical information
 
-**Use your preferred IDE**
+## Setup Instructions
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Frontend (React)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. Install dependencies:
+```
+npm install
+```
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+2. Start the development server:
+```
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The frontend will be available at `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Backend (Flask)
 
-**Use GitHub Codespaces**
+1. Navigate to the backend directory:
+```
+cd backend
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+2. Create a virtual environment:
+```
+python -m venv venv
+```
 
-## What technologies are used for this project?
+3. Activate the virtual environment:
+- On Windows: `venv\Scripts\activate`
+- On macOS/Linux: `source venv/bin/activate`
 
-This project is built with:
+4. Install dependencies:
+```
+pip install -r requirements.txt
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+5. Run the Flask server:
+```
+python app.py
+```
 
-## How can I deploy this project?
+The backend API will be available at `http://localhost:5000`.
 
-Simply open [Lovable](https://lovable.dev/projects/0e01fe44-d3eb-4975-9464-ee22b3a87856) and click on Share -> Publish.
+## Important Notes
 
-## Can I connect a custom domain to my Lovable project?
+This application is for demonstration and educational purposes only. It is not intended for clinical use or to replace professional medical advice.
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+The AI diagnosis capabilities shown in this demo use mock data. In a production environment, these would be connected to properly trained and validated medical AI models.
