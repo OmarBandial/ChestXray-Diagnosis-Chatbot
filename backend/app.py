@@ -6,9 +6,9 @@ import uuid
 from werkzeug.utils import secure_filename
 import time
 
-# In a real application, these would be actual ML modules
-# import load_model
-# import LLM
+# Import the actual ML modules
+import load_model
+import LLM
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
@@ -56,7 +56,8 @@ def upload_xray():
             'xray_path': file_path,
             'created_at': time.time(),
             'patient_data': None,
-            'diagnosis_results': None
+            'diagnosis_results': None,
+            'visualization': None
         }
         
         return jsonify({
@@ -86,38 +87,25 @@ def submit_patient_data():
         'medications': data.get('medications', [])
     }
     
-    # In a real app, we'd call the model here:
-    # results = load_model.predict(
-    #     xray_path=sessions[session_id]['xray_path'], 
-    #     patient_data=sessions[session_id]['patient_data']
-    # )
-    
-    # Mock diagnosis results for demonstration
-    mock_results = [
-        {
-            'ailment': 'Pneumonia',
-            'confidence': 0.87,
-            'description': 'Inflammation of the lungs caused by infection.'
-        },
-        {
-            'ailment': 'Pleural Effusion',
-            'confidence': 0.45,
-            'description': 'Buildup of fluid between the lungs and chest cavity.'
-        },
-        {
-            'ailment': 'Atelectasis',
-            'confidence': 0.32,
-            'description': 'Collapse or closure of a lung resulting in reduced or absent gas exchange.'
-        }
-    ]
-    
-    # Store diagnosis results
-    sessions[session_id]['diagnosis_results'] = mock_results
-    
-    return jsonify({
-        'success': True,
-        'results': mock_results
-    })
+    # Use the real model for prediction
+    try:
+        prediction_data = load_model.predict(
+            xray_path=sessions[session_id]['xray_path'], 
+            patient_data=sessions[session_id]['patient_data']
+        )
+        
+        # Store diagnosis results and visualization
+        sessions[session_id]['diagnosis_results'] = prediction_data['results']
+        sessions[session_id]['visualization'] = prediction_data['visualization']
+        
+        return jsonify({
+            'success': True,
+            'results': prediction_data['results'],
+            'visualization': prediction_data['visualization']
+        })
+    except Exception as e:
+        print(f"Error during prediction: {str(e)}")
+        return jsonify({'error': f'Prediction failed: {str(e)}'}), 500
 
 @app.route('/api/diagnosis/<session_id>', methods=['GET'])
 def get_diagnosis(session_id):
@@ -128,10 +116,11 @@ def get_diagnosis(session_id):
     if not sessions[session_id].get('diagnosis_results'):
         return jsonify({'error': 'Diagnosis not yet performed'}), 404
     
-    # Return the diagnosis results
+    # Return the diagnosis results with visualization
     return jsonify({
         'success': True,
-        'results': sessions[session_id]['diagnosis_results']
+        'results': sessions[session_id]['diagnosis_results'],
+        'visualization': sessions[session_id]['visualization']
     })
 
 @app.route('/api/chat/<session_id>', methods=['POST'])
@@ -146,30 +135,34 @@ def chat_with_ai(session_id):
     if not user_message:
         return jsonify({'error': 'Empty message'}), 400
     
-    # In a real app, this would use the LLM module:
-    # ai_response = LLM.generate_response(
-    #     user_message=user_message,
-    #     diagnosis_results=sessions[session_id]['diagnosis_results'],
-    #     patient_data=sessions[session_id]['patient_data']
-    # )
-    
-    # Mock AI responses for demonstration
-    ai_responses = [
-        "Based on your X-ray, I can see signs of inflammation in the lower right lung. This is consistent with early-stage pneumonia, which aligns with the symptoms you've reported.",
-        "Your symptoms of shortness of breath and chest pain are common with pleural effusion. The fluid buildup visible on your X-ray explains these symptoms.",
-        "While your symptoms are concerning, the X-ray doesn't show any severe abnormalities. This could be bronchitis rather than pneumonia, which wouldn't necessarily appear on an X-ray.",
-        "The patterns visible in your lung fields suggest you may have had this condition for some time. Have you experienced these symptoms before?",
-        "Your medical history of asthma is important to consider here, as it can sometimes cause similar symptoms. However, the X-ray findings suggest this is a separate issue requiring different treatment."
-    ]
-    
-    import random
-    ai_response = random.choice(ai_responses)
-    
-    return jsonify({
-        'success': True,
-        'message': ai_response,
-        'timestamp': time.time()
-    })
+    # Use the real LLM module for response generation
+    try:
+        ai_response = LLM.generate_response(
+            user_message=user_message,
+            diagnosis_results=sessions[session_id]['diagnosis_results'],
+            patient_data=sessions[session_id]['patient_data']
+        )
+        
+        if not ai_response:
+            # Fallback if LLM fails or is unavailable
+            ai_responses = [
+                "Based on your X-ray, I can see signs consistent with the findings in our analysis. Could you tell me more about your symptoms?",
+                "The X-ray findings suggest some abnormalities that align with the diagnosis. How long have you been experiencing these symptoms?",
+                "I notice the model has detected some patterns in your X-ray. Would you like me to explain what these specific findings mean?",
+                "Based on the analysis and your medical history, there are several factors to consider. What concerns you most about these results?",
+                "The analysis shows some findings that should be discussed with a healthcare provider. Is there anything specific about the results you'd like me to clarify?"
+            ]
+            import random
+            ai_response = random.choice(ai_responses)
+        
+        return jsonify({
+            'success': True,
+            'message': ai_response,
+            'timestamp': time.time()
+        })
+    except Exception as e:
+        print(f"Error generating AI response: {str(e)}")
+        return jsonify({'error': f'AI response generation failed: {str(e)}'}), 500
 
 # Cleanup old sessions periodically (in production, this would be a scheduled task)
 @app.before_request

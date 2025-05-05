@@ -1,8 +1,39 @@
 
-"""
-This is a placeholder module for the Large Language Model integration.
-In a real application, this would contain code to interact with an LLM API.
-"""
+import requests
+import base64
+import json
+
+# Load and encode image as base64
+def encode_image_to_base64(image_path):
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
+
+# Query Ollama with or without image
+def query_ollama(prompt, image_path=None):
+    payload = {
+        "model": "gemma3:4b",
+        "prompt": prompt
+    }
+
+    if image_path:
+        image_base64 = encode_image_to_base64(image_path)
+        payload["images"] = [image_base64]
+
+    response = requests.post("http://localhost:11434/api/generate", json=payload, stream=True)
+
+    if response.status_code == 200:
+        full_response = ""
+        for line in response.iter_lines():
+            if line:
+                try:
+                    json_data = json.loads(line.decode("utf-8"))
+                    full_response += json_data.get("response", "")
+                except json.JSONDecodeError as e:
+                    print("Decode error:", e)
+        return full_response
+    else:
+        print("Error:", response.status_code, response.text)
+        return None
 
 def generate_response(user_message, diagnosis_results, patient_data):
     """
@@ -16,25 +47,27 @@ def generate_response(user_message, diagnosis_results, patient_data):
     Returns:
         str: AI-generated response
     """
-    # In a real application, this would:
-    # 1. Format the context (diagnosis results, patient data)
-    # 2. Call an LLM API (like OpenAI GPT-4, Anthropic Claude, etc.)
-    # 3. Process and return the response
+    # Format the context information into a detailed prompt for the LLM
+    prompt = f"""
+You are a medical assistant AI. Below are X-ray analysis results and patient information.
+Please provide a helpful, accurate, and compassionate response to the user's question.
+
+PATIENT INFORMATION:
+- Age: {patient_data.get('age', 'Unknown')}
+- Gender: {patient_data.get('gender', 'Unknown')}
+- Pain Level: {patient_data.get('painLevel', 'Unknown')}/10
+- Symptoms: {', '.join(patient_data.get('symptoms', ['None reported']))}
+- Medical History: {patient_data.get('medicalHistory', 'None provided')}
+- Medications: {', '.join(patient_data.get('medications', ['None reported']))}
+
+X-RAY ANALYSIS RESULTS:
+"""
+
+    # Add each condition with its probability
+    for result in diagnosis_results:
+        prompt += f"- {result['ailment']}: {result['confidence']:.2f} probability\n"
     
-    # This is a mock implementation
-    print(f"User message: {user_message}")
-    print(f"Context - Diagnosis: {diagnosis_results}")
-    print(f"Context - Patient: {patient_data}")
+    prompt += f"\nUSER QUESTION: {user_message}\n\nPlease provide a detailed, helpful response that addresses the user's question specifically in relation to their X-ray results and medical information. Include relevant medical information while being compassionate and clear."
     
-    # Mock responses based on common questions
-    if "symptoms" in user_message.lower():
-        return "Common symptoms of pneumonia include cough with phlegm, fever, chills, and shortness of breath. Based on your X-ray, these symptoms align with what we're seeing in your lungs."
-    
-    if "treatment" in user_message.lower():
-        return "Treatment for pneumonia typically includes antibiotics, rest, and increased fluid intake. In your case, given the X-ray findings and your symptoms, a course of antibiotics would likely be recommended by a healthcare provider."
-    
-    if "serious" in user_message.lower() or "severe" in user_message.lower():
-        return "Based on the X-ray and your information, this appears to be a moderate case. The confidence score is high (87%), suggesting clear evidence of the condition. However, pneumonia's severity varies, and proper medical attention is important."
-    
-    # Default response
-    return "Based on your X-ray and the information you've provided, the AI model has detected patterns consistent with pneumonia. I recommend consulting with a healthcare provider to confirm this diagnosis and discuss appropriate treatment options."
+    # Query the LLM
+    return query_ollama(prompt)

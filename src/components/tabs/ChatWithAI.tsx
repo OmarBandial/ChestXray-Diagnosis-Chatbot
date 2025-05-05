@@ -59,28 +59,16 @@ const ChatWithAI: React.FC = () => {
     
     setLoading(true);
     try {
-      // In a real app, this would send the message to the backend
-      // const response = await sendChatMessage(sessionId, message);
+      // Send the message to the backend and get AI response
+      const response = await sendChatMessage(sessionId, message);
       
-      // Simulate AI response
-      setTimeout(() => {
-        const aiResponses = [
-          "Based on your X-ray, I can see signs of inflammation in the lower right lung. This is consistent with early-stage pneumonia, which aligns with the symptoms you've reported.",
-          "Your symptoms of shortness of breath and chest pain are common with pleural effusion. The fluid buildup visible on your X-ray explains these symptoms.",
-          "While your symptoms are concerning, the X-ray doesn't show any severe abnormalities. This could be bronchitis rather than pneumonia, which wouldn't necessarily appear on an X-ray.",
-          "The patterns visible in your lung fields suggest you may have had this condition for some time. Have you experienced these symptoms before?",
-          "Your medical history of asthma is important to consider here, as it can sometimes cause similar symptoms. However, the X-ray findings suggest this is a separate issue requiring different treatment."
-        ];
-        
-        const aiMessage: ChatMessage = {
-          role: 'assistant',
-          content: aiResponses[Math.floor(Math.random() * aiResponses.length)],
-          timestamp: new Date().toISOString()
-        };
-        addChatMessage(aiMessage);
-        setLoading(false);
-      }, 1000);
-      
+      const aiMessage: ChatMessage = {
+        role: 'assistant',
+        content: response.message,
+        timestamp: new Date().toISOString()
+      };
+      addChatMessage(aiMessage);
+      setLoading(false);
     } catch (error) {
       toast({
         title: "Message failed to send",

@@ -41,15 +41,6 @@ const XRayUpload: React.FC = () => {
 
     // Store the file
     setXrayFile(file);
-    
-    // In a real app, we'd upload immediately and get a session ID
-    toast({
-      title: "X-ray uploaded",
-      description: "The image has been uploaded successfully."
-    });
-
-    // Simulating server response with a session ID
-    setSessionId(`sess_${Math.random().toString(36).substring(2, 15)}`);
   };
 
   const handleUpload = async () => {
@@ -64,9 +55,9 @@ const XRayUpload: React.FC = () => {
 
     setLoading(true);
     try {
-      // In a real app, this would actually send the file to the server
-      // const response = await uploadXRayImage(xrayFile);
-      // setSessionId(response.sessionId);
+      // Send the file to the backend
+      const response = await uploadXRayImage(xrayFile);
+      setSessionId(response.sessionId);
       
       toast({
         title: "X-ray processed",

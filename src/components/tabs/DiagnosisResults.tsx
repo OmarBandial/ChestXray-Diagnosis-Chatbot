@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { AlertCircle, FileText } from 'lucide-react';
 
 const DiagnosisResults: React.FC = () => {
-  const { xrayFile, patientData, diagnosisResults } = useDiagnosis();
+  const { xrayFile, patientData, diagnosisResults, visualization } = useDiagnosis();
 
   if (!xrayFile || !patientData || diagnosisResults.length === 0) {
     return (
@@ -102,6 +102,19 @@ const DiagnosisResults: React.FC = () => {
             </div>
           </div>
         </div>
+        
+        {visualization && (
+          <div>
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Diagnosis Visualization</h3>
+            <div className="border rounded-md overflow-hidden bg-white p-2 flex justify-center">
+              <img 
+                src={`data:image/png;base64,${visualization}`}
+                alt="Diagnosis Visualization"
+                className="max-w-full"
+              />
+            </div>
+          </div>
+        )}
         
         <div>
           <h3 className="text-sm font-medium text-gray-500 mb-2">Diagnosis</h3>

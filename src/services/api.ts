@@ -82,6 +82,11 @@ export interface DiagnosisResult {
   description: string;
 }
 
+export interface DiagnosisResponse {
+  results: DiagnosisResult[];
+  visualization?: string;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;

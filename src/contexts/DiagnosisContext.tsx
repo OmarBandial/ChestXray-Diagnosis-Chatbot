@@ -9,12 +9,14 @@ interface DiagnosisContextType {
   chatHistory: ChatMessage[];
   sessionId: string | null;
   loading: boolean;
+  visualization: string | null;
   setXrayFile: (file: File | null) => void;
   setPatientData: (data: PatientData | null) => void;
   setDiagnosisResults: (results: DiagnosisResult[]) => void;
   addChatMessage: (message: ChatMessage) => void;
   setSessionId: (id: string | null) => void;
   setLoading: (isLoading: boolean) => void;
+  setVisualization: (image: string | null) => void;
   resetAll: () => void;
 }
 
@@ -27,6 +29,7 @@ export const DiagnosisProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [visualization, setVisualization] = useState<string | null>(null);
 
   const addChatMessage = (message: ChatMessage) => {
     setChatHistory((prev) => [...prev, message]);
@@ -39,6 +42,7 @@ export const DiagnosisProvider: React.FC<{ children: ReactNode }> = ({ children 
     setChatHistory([]);
     setSessionId(null);
     setLoading(false);
+    setVisualization(null);
   };
 
   return (
@@ -50,12 +54,14 @@ export const DiagnosisProvider: React.FC<{ children: ReactNode }> = ({ children 
         chatHistory,
         sessionId,
         loading,
+        visualization,
         setXrayFile,
         setPatientData,
         setDiagnosisResults,
         addChatMessage,
         setSessionId,
         setLoading,
+        setVisualization,
         resetAll,
       }}
     >
