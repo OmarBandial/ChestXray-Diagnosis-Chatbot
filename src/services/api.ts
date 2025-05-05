@@ -72,6 +72,8 @@ export interface PatientData {
   medicalHistory: string;
   medications: string[];
   sessionId?: string;
+  frontalLateral?: string;
+  apPa?: string;
 }
 
 export interface DiagnosisResult {

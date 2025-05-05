@@ -5,74 +5,43 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Slider } from "@/components/ui/slider";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useDiagnosis } from '@/contexts/DiagnosisContext';
-import { submitPatientData, PatientData } from '@/services/api';
-import { Check, User } from 'lucide-react';
+import { Check } from 'lucide-react';
+
+interface PatientFormData {
+  sex: string;
+  age: number;
+  frontalLateral: string;
+  apPa: string;
+}
 
 const PatientForm: React.FC = () => {
   const { sessionId, setPatientData, setDiagnosisResults, setLoading } = useDiagnosis();
   const { toast } = useToast();
   
-  const [formData, setFormData] = useState<PatientData>({
+  const [formData, setFormData] = useState<PatientFormData>({
+    sex: '',
     age: 0,
-    gender: '',
-    symptoms: [],
-    painLevel: 0,
-    medicalHistory: '',
-    medications: []
+    frontalLateral: 'Frontal',
+    apPa: 'PA'
   });
 
-  const [symptomInput, setSymptomInput] = useState('');
-  const [medicationInput, setMedicationInput] = useState('');
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleGenderChange = (value: string) => {
-    setFormData(prev => ({ ...prev, gender: value }));
+  const handleSexChange = (value: string) => {
+    setFormData(prev => ({ ...prev, sex: value }));
   };
 
-  const handlePainLevelChange = (value: number[]) => {
-    setFormData(prev => ({ ...prev, painLevel: value[0] }));
+  const handleFrontalLateralChange = (value: string) => {
+    setFormData(prev => ({ ...prev, frontalLateral: value }));
   };
 
-  const addSymptom = () => {
-    if (symptomInput && !formData.symptoms.includes(symptomInput)) {
-      setFormData(prev => ({
-        ...prev,
-        symptoms: [...prev.symptoms, symptomInput]
-      }));
-      setSymptomInput('');
-    }
-  };
-
-  const removeSymptom = (symptom: string) => {
-    setFormData(prev => ({
-      ...prev,
-      symptoms: prev.symptoms.filter(s => s !== symptom)
-    }));
-  };
-
-  const addMedication = () => {
-    if (medicationInput && !formData.medications.includes(medicationInput)) {
-      setFormData(prev => ({
-        ...prev,
-        medications: [...prev.medications, medicationInput]
-      }));
-      setMedicationInput('');
-    }
-  };
-
-  const removeMedication = (medication: string) => {
-    setFormData(prev => ({
-      ...prev,
-      medications: prev.medications.filter(m => m !== medication)
-    }));
+  const handleApPaChange = (value: string) => {
+    setFormData(prev => ({ ...prev, apPa: value }));
   };
 
   const handleSubmit = async () => {
@@ -85,10 +54,10 @@ const PatientForm: React.FC = () => {
       return;
     }
 
-    if (!formData.age || !formData.gender) {
+    if (!formData.sex || !formData.age) {
       toast({
         title: "Missing information",
-        description: "Please provide age and gender information.",
+        description: "Please provide sex and age information.",
         variant: "destructive",
       });
       return;
@@ -96,11 +65,19 @@ const PatientForm: React.FC = () => {
 
     setLoading(true);
     try {
-      // In a real app, this would send data to the backend
-      // const response = await submitPatientData({...formData, sessionId});
+      // Store the patient data - convert to the format expected by the context
+      const contextData = {
+        gender: formData.sex,
+        age: formData.age,
+        symptoms: [],
+        painLevel: 0,
+        medicalHistory: '',
+        medications: [],
+        frontalLateral: formData.frontalLateral,
+        apPa: formData.apPa
+      };
       
-      // Store the patient data
-      setPatientData(formData);
+      setPatientData(contextData);
       
       // Mock diagnosis results for demo purposes
       const mockResults = [
@@ -143,28 +120,29 @@ const PatientForm: React.FC = () => {
       <CardHeader>
         <CardTitle>Patient Information</CardTitle>
         <CardDescription>
-          Please enter your information to help with the diagnosis.
+          Please enter required information to help with the diagnosis.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4">
           <div className="space-y-2">
             <Label htmlFor="age">Age</Label>
             <Input
               id="age"
               name="age"
               type="number"
-              placeholder="Enter your age"
+              placeholder="Enter patient age"
               value={formData.age || ''}
               onChange={handleChange}
             />
           </div>
+          
           <div className="space-y-2">
-            <Label htmlFor="gender">Gender</Label>
+            <Label htmlFor="sex">Sex</Label>
             <RadioGroup
-              name="gender"
-              value={formData.gender}
-              onValueChange={handleGenderChange}
+              name="sex"
+              value={formData.sex}
+              onValueChange={handleSexChange}
               className="flex space-x-4"
             >
               <div className="flex items-center space-x-2">
@@ -175,103 +153,45 @@ const PatientForm: React.FC = () => {
                 <RadioGroupItem value="female" id="female" />
                 <Label htmlFor="female">Female</Label>
               </div>
+            </RadioGroup>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="frontalLateral">X-ray View</Label>
+            <RadioGroup
+              name="frontalLateral"
+              value={formData.frontalLateral}
+              onValueChange={handleFrontalLateralChange}
+              className="flex space-x-4"
+            >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="other" id="other" />
-                <Label htmlFor="other">Other</Label>
+                <RadioGroupItem value="Frontal" id="frontal" />
+                <Label htmlFor="frontal">Frontal</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Lateral" id="lateral" />
+                <Label htmlFor="lateral">Lateral</Label>
               </div>
             </RadioGroup>
           </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="symptoms">Symptoms</Label>
-          <div className="flex space-x-2">
-            <Input
-              id="symptomInput"
-              placeholder="Enter symptom (e.g., cough, fever)"
-              value={symptomInput}
-              onChange={(e) => setSymptomInput(e.target.value)}
-            />
-            <Button type="button" onClick={addSymptom} variant="outline">
-              Add
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {formData.symptoms.map((symptom, index) => (
-              <span
-                key={index}
-                className="bg-medical-light text-medical-primary px-3 py-1 rounded-full text-sm flex items-center"
-              >
-                {symptom}
-                <button
-                  type="button"
-                  className="ml-2 text-medical-primary hover:text-medical-dark"
-                  onClick={() => removeSymptom(symptom)}
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="painLevel">Pain Level (0-10)</Label>
-          <div className="flex items-center space-x-4">
-            <Slider
-              id="painLevel"
-              min={0}
-              max={10}
-              step={1}
-              value={[formData.painLevel]}
-              onValueChange={handlePainLevelChange}
-              className="flex-1"
-            />
-            <span className="w-8 text-center">{formData.painLevel}</span>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="medicalHistory">Medical History</Label>
-          <Textarea
-            id="medicalHistory"
-            name="medicalHistory"
-            placeholder="Enter any relevant medical history"
-            value={formData.medicalHistory}
-            onChange={handleChange}
-            className="min-h-[100px]"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="medications">Current Medications</Label>
-          <div className="flex space-x-2">
-            <Input
-              id="medicationInput"
-              placeholder="Enter medication name"
-              value={medicationInput}
-              onChange={(e) => setMedicationInput(e.target.value)}
-            />
-            <Button type="button" onClick={addMedication} variant="outline">
-              Add
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {formData.medications.map((medication, index) => (
-              <span
-                key={index}
-                className="bg-gray-100 px-3 py-1 rounded-full text-sm flex items-center"
-              >
-                {medication}
-                <button
-                  type="button"
-                  className="ml-2 text-gray-500 hover:text-gray-700"
-                  onClick={() => removeMedication(medication)}
-                >
-                  ×
-                </button>
-              </span>
-            ))}
+          
+          <div className="space-y-2">
+            <Label htmlFor="apPa">X-ray Technique</Label>
+            <RadioGroup
+              name="apPa"
+              value={formData.apPa}
+              onValueChange={handleApPaChange}
+              className="flex space-x-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="PA" id="pa" />
+                <Label htmlFor="pa">PA (Posterior-Anterior)</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="AP" id="ap" />
+                <Label htmlFor="ap">AP (Anterior-Posterior)</Label>
+              </div>
+            </RadioGroup>
           </div>
         </div>
       </CardContent>
