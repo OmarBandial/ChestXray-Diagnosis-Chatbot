@@ -9,8 +9,8 @@ const Index = () => {
     <DiagnosisProvider>
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
-        <main className="flex-1 container mx-auto p-4">
-          <div className="h-[calc(100vh-180px)]">
+        <main className="flex-1 container mx-auto p-6">
+          <div className="h-[calc(100vh-200px)]">
             <TabContent />
           </div>
         </main>
