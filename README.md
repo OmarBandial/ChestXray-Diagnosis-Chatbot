@@ -20,7 +20,7 @@ MedVision AI combines modern web technologies with AI capabilities to provide pr
 ## Setup Instructions
 - first of all download Ollama and run the following command
 ```
-ollama run gemma3
+ollama run gemma3:4b
 ```
 
 ### Frontend (React)
