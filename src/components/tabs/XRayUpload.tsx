@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { useDiagnosis } from '@/contexts/DiagnosisContext';
 import { uploadXRayImage } from '@/services/api';
 import { Image } from 'lucide-react';
 
-const XRayUpload: React.FC = () => {
+const XRayUpload: React.FC<{ setLeftTab?: (tab: string) => void }> = ({ setLeftTab }) => {
   const { setXrayFile, setSessionId, setLoading, xrayFile } = useDiagnosis();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -58,11 +57,11 @@ const XRayUpload: React.FC = () => {
       // Send the file to the backend
       const response = await uploadXRayImage(xrayFile);
       setSessionId(response.sessionId);
-      
       toast({
         title: "X-ray processed",
         description: "Your X-ray has been processed successfully. Please proceed to enter patient information."
       });
+      if (setLeftTab) setLeftTab('patient'); // Switch to Patient Info tab
     } catch (error) {
       toast({
         title: "Upload failed",

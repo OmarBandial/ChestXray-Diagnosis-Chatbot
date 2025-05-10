@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,8 +22,8 @@ const ChatWithAI: React.FC = () => {
   // Generate initial AI message about results if we have diagnosis results
   useEffect(() => {
     if (diagnosisResults.length > 0 && chatHistory.length === 0) {
-      // Create an initial AI summary message
-      const topCondition = diagnosisResults[0];
+      // Find the highest probability result
+      const topCondition = [...diagnosisResults].sort((a, b) => b.confidence - a.confidence)[0];
       const initialMessage: ChatMessage = {
         role: 'assistant',
         content: `Based on your X-ray and patient information, I've detected signs of ${topCondition.ailment} with ${Math.round(topCondition.confidence * 100)}% confidence. ${topCondition.description} Would you like to discuss these findings or do you have any questions?`,

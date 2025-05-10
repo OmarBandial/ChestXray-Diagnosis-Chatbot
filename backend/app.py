@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
@@ -7,8 +6,8 @@ from werkzeug.utils import secure_filename
 import time
 
 # Import the actual ML modules
-import load_model
 import LLM
+from chexnet_model import predict_chexnet
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
@@ -80,18 +79,19 @@ def submit_patient_data():
     # Store patient data in session
     sessions[session_id]['patient_data'] = {
         'age': data.get('age'),
-        'gender': data.get('gender'),
-        'symptoms': data.get('symptoms', []),
-        'painLevel': data.get('painLevel'),
-        'medicalHistory': data.get('medicalHistory', ''),
-        'medications': data.get('medications', [])
+        'sex': data.get('sex'),
+        'frontalLateral': data.get('frontalLateral', 'Frontal'),
+        'apPa': data.get('apPa', 'PA')
     }
     
-    # Use the real model for prediction
+    # Use the CheXNet Keras model for prediction
     try:
-        prediction_data = load_model.predict(
-            xray_path=sessions[session_id]['xray_path'], 
-            patient_data=sessions[session_id]['patient_data']
+        prediction_data = predict_chexnet(
+            img_path=sessions[session_id]['xray_path'],
+            age=sessions[session_id]['patient_data']['age'],
+            sex=sessions[session_id]['patient_data']['sex'],
+            view=sessions[session_id]['patient_data']['frontalLateral'],
+            projection=sessions[session_id]['patient_data']['apPa']
         )
         
         # Store diagnosis results and visualization
@@ -128,6 +128,9 @@ def chat_with_ai(session_id):
     """Handle AI chat interaction"""
     if session_id not in sessions:
         return jsonify({'error': 'Invalid or expired session'}), 400
+    
+    if not sessions[session_id]['diagnosis_results'] or not sessions[session_id]['patient_data']:
+        return jsonify({'error': 'Diagnosis or patient data missing'}), 400
     
     data = request.json
     user_message = data.get('message', '')

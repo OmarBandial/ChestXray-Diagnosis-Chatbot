@@ -1,4 +1,3 @@
-
 import requests
 import base64
 import json
@@ -49,25 +48,21 @@ def generate_response(user_message, diagnosis_results, patient_data):
     """
     # Format the context information into a detailed prompt for the LLM
     prompt = f"""
-You are a medical assistant AI. Below are X-ray analysis results and patient information.
-Please provide a helpful, accurate, and compassionate response to the user's question.
+You are a medical AI assistant. Respond to the user's questions in a professional, direct, and concise manner. Use no more than 40 words. Use the following patient information for better context:
 
-PATIENT INFORMATION:
 - Age: {patient_data.get('age', 'Unknown')}
-- Gender: {patient_data.get('gender', 'Unknown')}
-- Pain Level: {patient_data.get('painLevel', 'Unknown')}/10
-- Symptoms: {', '.join(patient_data.get('symptoms', ['None reported']))}
-- Medical History: {patient_data.get('medicalHistory', 'None provided')}
-- Medications: {', '.join(patient_data.get('medications', ['None reported']))}
+- Gender: {patient_data.get('sex', 'Unknown')}
+- X-ray Type: {patient_data.get('frontalLateral', 'Unknown')}
+- View: {patient_data.get('apPa', 'Unknown')}
 
-X-RAY ANALYSIS RESULTS:
+X-RAY RESULT:
 """
 
     # Add each condition with its probability
     for result in diagnosis_results:
         prompt += f"- {result['ailment']}: {result['confidence']:.2f} probability\n"
     
-    prompt += f"\nUSER QUESTION: {user_message}\n\nPlease provide a detailed, helpful response that addresses the user's question specifically in relation to their X-ray results and medical information. Include relevant medical information while being compassionate and clear."
+    prompt += f"\nUSER QUESTION: {user_message}\n\nBe precise and concise."
     
     # Query the LLM
     return query_ollama(prompt)

@@ -1,4 +1,3 @@
-
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,22 +37,52 @@ except Exception as e:
 mobilenet = mobilenet.to(device)
 mobilenet.eval()
 
-# Transform for single image
+# Transform for single image - matching training transforms
 transform = transforms.Compose([
-    transforms.Resize((128, 128)),
+    transforms.Resize((128, 128)),  # Match training size
     transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])  # ImageNet normalization
 ])
 
-def predict_xray_probs(image_path):
-    image = Image.open(image_path).convert("RGB")
-    input_tensor = transform(image).unsqueeze(0).to(device)
+def predict_xray_probs(image_path, patient_data=None):
+    """Get probabilities from model, incorporating patient metadata if available"""
+    try:
+        # Load and preprocess image
+        image = Image.open(image_path).convert("RGB")
+        input_tensor = transform(image).unsqueeze(0).to(device)
 
-    with torch.no_grad():
-        output = mobilenet(input_tensor)
-        probs = torch.sigmoid(output).cpu().numpy()[0]
+        # Prepare metadata tensor if available
+        if patient_data:
+            # Convert metadata to tensor
+            age = torch.tensor([[float(patient_data.get('age', 0))]], device=device)
+            sex = torch.tensor([[1.0 if patient_data.get('sex', '').lower() == 'male' else 0.0]], device=device)
+            view = torch.tensor([[1.0 if patient_data.get('frontalLateral', 'Frontal') == 'Lateral' else 0.0]], device=device)
+            technique = torch.tensor([[1.0 if patient_data.get('apPa', 'PA') == 'AP' else 0.0]], device=device)
+            
+            # Combine metadata
+            metadata = torch.cat([age, sex, view, technique], dim=1)
+            # Normalize age to [0,1] range (assuming max age of 100)
+            metadata[:, 0] = metadata[:, 0] / 100.0
+        else:
+            metadata = torch.zeros((1, 4), device=device)
 
-    return probs  # Return raw probabilities for Flask API
+        with torch.no_grad():
+            # Get image features
+            image_features = mobilenet.features(input_tensor)
+            image_features = mobilenet.avgpool(image_features)
+            image_features = torch.flatten(image_features, 1)
+            
+            # Combine image features with metadata
+            combined_features = torch.cat([image_features, metadata], dim=1)
+            
+            # Pass through classifier
+            output = mobilenet.classifier(combined_features)
+            probs = torch.sigmoid(output).cpu().numpy()[0]
+
+        return probs
+    except Exception as e:
+        print(f"Error in prediction: {e}")
+        return np.zeros(len(pathologies))
 
 def predict(xray_path, patient_data):
     """
@@ -61,13 +90,13 @@ def predict(xray_path, patient_data):
     
     Args:
         xray_path (str): Path to the uploaded X-ray image
-        patient_data (dict): Patient information including age, gender, symptoms, etc.
+        patient_data (dict): Patient information including age, sex, FrontalLateral, apPa
         
     Returns:
         dict: Contains ailments list and visualization image
     """
-    # Get prediction probabilities
-    probs = predict_xray_probs(xray_path)
+    # Get prediction probabilities with patient data
+    probs = predict_xray_probs(xray_path, patient_data)
     
     # Create results
     results = []

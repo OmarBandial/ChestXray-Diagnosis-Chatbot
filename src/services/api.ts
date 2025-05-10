@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 
 // API base URL - change this to your Flask backend URL when deploying
@@ -66,11 +65,7 @@ export const sendChatMessage = async (sessionId: string, message: string) => {
 // Types
 export interface PatientData {
   age: number;
-  gender: string;
-  symptoms: string[];
-  painLevel: number;
-  medicalHistory: string;
-  medications: string[];
+  sex: string;
   sessionId?: string;
   frontalLateral?: string;
   apPa?: string;

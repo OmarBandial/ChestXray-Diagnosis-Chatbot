@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { useDiagnosis } from '@/contexts/DiagnosisContext';
 import { Check } from 'lucide-react';
+import { submitPatientData } from '@/services/api';
 
 interface PatientFormData {
   sex: string;
@@ -17,7 +17,7 @@ interface PatientFormData {
 }
 
 const PatientForm: React.FC = () => {
-  const { sessionId, setPatientData, setDiagnosisResults, setLoading } = useDiagnosis();
+  const { sessionId, setPatientData, setDiagnosisResults, setLoading, setVisualization } = useDiagnosis();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState<PatientFormData>({
@@ -65,40 +65,22 @@ const PatientForm: React.FC = () => {
 
     setLoading(true);
     try {
-      // Store the patient data - convert to the format expected by the context
-      const contextData = {
-        gender: formData.sex,
+      // Prepare the data to send to the backend
+      const patientData = {
+        sessionId,
         age: formData.age,
-        symptoms: [],
-        painLevel: 0,
-        medicalHistory: '',
-        medications: [],
+        sex: formData.sex,
         frontalLateral: formData.frontalLateral,
         apPa: formData.apPa
       };
       
-      setPatientData(contextData);
+      // Send data to backend
+      const response = await submitPatientData(patientData);
       
-      // Mock diagnosis results for demo purposes
-      const mockResults = [
-        {
-          ailment: "Pneumonia",
-          confidence: 0.87,
-          description: "Inflammation of the lungs caused by infection."
-        },
-        {
-          ailment: "Pleural Effusion",
-          confidence: 0.45,
-          description: "Buildup of fluid between the lungs and chest cavity."
-        },
-        {
-          ailment: "Atelectasis",
-          confidence: 0.32,
-          description: "Collapse or closure of a lung resulting in reduced or absent gas exchange."
-        }
-      ];
-      
-      setDiagnosisResults(mockResults);
+      // Update context with the response data
+      setPatientData(patientData);
+      setDiagnosisResults(response.results);
+      setVisualization(response.visualization);
       
       toast({
         title: "Patient data submitted",
