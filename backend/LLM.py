@@ -47,22 +47,28 @@ def generate_response(user_message, diagnosis_results, patient_data):
         str: AI-generated response
     """
     # Format the context information into a detailed prompt for the LLM
-    prompt = f"""
-You are a medical AI assistant. Respond to the user's questions in a professional, direct, and concise manner. Use no more than 40 words. Use the following patient information for better context:
+    base_prompt  = f"""
+    You are a medical AI assistant that explains X-ray diagnosis results to patients.
+    Be professional, brief, and avoid unnecessary details. Always limit explanations to 2–3 sentences per ailment.
+    Do not continue unless the user asks questions.
 
-- Age: {patient_data.get('age', 'Unknown')}
-- Gender: {patient_data.get('sex', 'Unknown')}
-- X-ray Type: {patient_data.get('frontalLateral', 'Unknown')}
-- View: {patient_data.get('apPa', 'Unknown')}
+    PATIENT INFORMATION:
+    - Age: {patient_data.get('age', 'Unknown')}
+    - Gender: {patient_data.get('sex', 'Unknown')}
+    - X-ray Type: {patient_data.get('frontalLateral', 'Unknown')}
+    - View: {patient_data.get('apPa', 'Unknown')}
 
-X-RAY RESULT:
-"""
+    DIAGNOSIS RESULTS:
+    """
 
-    # Add each condition with its probability
     for result in diagnosis_results:
-        prompt += f"- {result['ailment']}: {result['confidence']:.2f} probability\n"
-    
-    prompt += f"\nUSER QUESTION: {user_message}\n\nBe precise and concise."
-    
-    # Query the LLM
+        base_prompt += f"- {result['ailment']}: {result['confidence']:.2f} probability\n"
+
+    if user_message.strip():
+        # User asked a question — answer briefly and specifically
+        prompt = base_prompt + f"\nUSER QUESTION: {user_message}\n\nRespond with no more than 40 words. Be precise and medically sound."
+    else:
+        # No user question — explain each condition briefly
+        prompt = base_prompt + "\nBriefly explain each ailment listed above with probability greater than 0.5 (2–3 sentences each). Then stop and wait for user input."
+
     return query_ollama(prompt)

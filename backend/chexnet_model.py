@@ -1,11 +1,10 @@
+import torch
+import torchxrayvision as xrv
 import numpy as np
+from PIL import Image
 import matplotlib.pyplot as plt
-import os
 import io
 import base64
-from tensorflow.keras.preprocessing import image
-from tensorflow.keras.applications import DenseNet121
-from tensorflow.keras.models import Model
 
 chexnet_labels = [
     "No Finding", "Enlarged Cardiomediastinum", "Cardiomegaly", "Lung Opacity", "Lung Lesion", "Edema",
@@ -13,44 +12,52 @@ chexnet_labels = [
     "Fracture", "Support Devices"
 ]
 
-def load_chexnet_model():
-    model = DenseNet121(
-        include_top=True,
-        weights=None,
-        input_shape=(224, 224, 3),
-        classes=14
-    )
-    model.load_weights('brucechou1983_CheXNet_Keras_0.3.0_weights.h5')
-    return model
+# Load a pretrained model (DenseNet121 trained on CheXpert)
+model = xrv.models.DenseNet(weights="densenet121-res224-chex")
 
-chexnet_model = load_chexnet_model()
+# Set model to evaluation mode
+model.eval()
+
+
+def load_image(path):
+    img = Image.open(path).convert("L")  # Grayscale
+    img = img.resize((224, 224))
+    img = np.array(img).astype(np.float32)
+    # Rescale from [0, 255] to [-1024, 1024]
+    img = img / 255.0 * (1024 + 1024) - 1024
+    img = img[None, :, :]  # Add channel dimension
+    img = torch.from_numpy(img).float()
+    img = img.unsqueeze(0)  # Add batch dimension
+    return img
+
+
 
 def predict_chexnet(img_path, age, sex, view, projection, target_size=(224, 224)):
     # Load and preprocess image
-    img = image.load_img(img_path, target_size=target_size)
-    img_array = image.img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0)
-    img_array /= 255.0
+    img = load_image(img_path)
 
     # Predict
-    predictions = chexnet_model.predict(img_array)[0]
+    with torch.no_grad():
+        predictions = model(img)[0].numpy()
     print("Raw predictions:", predictions)
 
     # Prepare results
     results = []
-    for i, label in enumerate(chexnet_labels):
-        results.append({
-            'ailment': label,
-            'confidence': float(predictions[i]),
-            'description': ''  # Optionally add descriptions
-        })
+    for i, label in enumerate(model.pathologies):
+        if label:
+            results.append({
+                'ailment': label,
+                'confidence': float(predictions[i]),
+                'description': ''  # Optionally add descriptions
+            })
 
     # Visualization (as base64) - Table only
     fig, ax = plt.subplots(figsize=(6, 5))
     data = []
-    for i, label in enumerate(chexnet_labels):
-        pred_prob = predictions[i]
-        data.append([label, f"{pred_prob:.3f}"])
+    for i, label in enumerate(model.pathologies):
+        if label:
+            pred_prob = predictions[i]
+            data.append([label, f"{pred_prob:.3f}"])
     col_labels = ["Pathology", "Prediction"]
     table = ax.table(cellText=data, colLabels=col_labels, loc='center')
     table.auto_set_font_size(False)

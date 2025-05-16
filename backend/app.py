@@ -143,7 +143,7 @@ def chat_with_ai(session_id):
         ai_response = LLM.generate_response(
             user_message=user_message,
             diagnosis_results=sessions[session_id]['diagnosis_results'],
-            patient_data=sessions[session_id]['patient_data']
+            patient_data=sessions[session_id]['patient_data'],
         )
         
         if not ai_response:
